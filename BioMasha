@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои биоритмы</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #fff0f5, #ffe4e1);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: #5a3d3d;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(255, 182, 193, 0.3);
+        }
+        
+        h1 {
+            color: #ff6b8b;
+            text-align: center;
+            text-shadow: 0 0 15px rgba(255, 107, 139, 0.4);
+            margin-bottom: 25px;
+            font-size: 2.3em;
+        }
+        
+        .bio-info {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #7a5a5a;
+            line-height: 1.6;
+        }
+        
+        .highlight {
+            color: #ff6b8b;
+            font-weight: bold;
+        }
+        
+        .graph-container {
+            height: 400px;
+            margin: 40px 0;
+            position: relative;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 8px 15px;
+            border-radius: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #9d7e7e;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📈 Мои биоритмы</h1>
+        
+        <div class="bio-info">
+            <div>Дата рождения: <span class="highlight">19 декабря 1996</span></div>
+            <div>Сегодня: <span id="today" class="highlight"></span></div>
+            <div>Возраст: <span id="age" class="highlight"></span></div>
+        </div>
+        
+        <div class="graph-container">
+            <canvas id="bioChart"></canvas>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff9eb5;"></div>
+                <span>Физический (23 дня)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ffb3c6;"></div>
+                <span>Эмоциональный (28 дней)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ffc8d8;"></div>
+                <span>Интеллектуальный (33 дня)</span>
+            </div>
+        </div>
+        
+        <div class="footer">
+            График показывает ваши биоритмы на 7 дней вперед
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Расчет возраста с правильным склонением
+        function calculateAge(birthDate) {
+            const today = new Date();
+            const birth = new Date(birthDate);
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            
+            // Правильное склонение слова "год"
+            let yearsText = 'лет';
+            if (age % 10 === 1 && age % 100 !== 11) {
+                yearsText = 'год';
+            } else if ([2,3,4].includes(age % 10) && ![12,13,14].includes(age % 100)) {
+                yearsText = 'года';
+            }
+            
+            return age + ' ' + yearsText;
+        }
+        
+        // Форматирование даты
+        function formatDate(date) {
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            return date.toLocaleDateString('ru-RU', options);
+        }
+        
+        // Расчет биоритмов (упрощенная модель)
+        function calculateBiorhythm(birthDate, daysSinceBirth, cycle) {
+            return Math.sin(2 * Math.PI * daysSinceBirth / cycle) * 100;
+        }
+        
+        // Установка сегодняшней даты и возраста
+        document.getElementById('today').textContent = formatDate(new Date());
+        document.getElementById('age').textContent = calculateAge('1996-12-19');
+        
+        // Создание графика
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('bioChart').getContext('2d');
+            
+            // Генерация дат (7 дней)
+            const dates = [];
+            const today = new Date();
+            for (let i = 0; i < 7; i++) {
+                const date = new Date();
+                date.setDate(today.getDate() + i);
+                dates.push(date.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric' }));
+            }
+            
+            // Расчет дней с рождения
+            const birthDate = new Date('1996-12-19');
+            const daysSinceBirth = Math.floor((today - birthDate) / (1000 * 60 * 60 * 24));
+            
+            // Данные для графиков
+            const physicalData = [];
+            const emotionalData = [];
+            const intellectualData = [];
+            
+            for (let i = 0; i < 7; i++) {
+                const days = daysSinceBirth + i;
+                physicalData.push(calculateBiorhythm(birthDate, days, 23));
+                emotionalData.push(calculateBiorhythm(birthDate, days, 28));
+                intellectualData.push(calculateBiorhythm(birthDate, days, 33));
+            }
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: 'Физический',
+                            data: physicalData,
+                            borderColor: '#ff9eb5',
+                            backgroundColor: 'rgba(255, 158, 181, 0.2)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#ff9eb5'
+                        },
+                        {
+                            label: 'Эмоциональный',
+                            data: emotionalData,
+                            borderColor: '#ffb3c6',
+                            backgroundColor: 'rgba(255, 179, 198, 0.2)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#ffb3c6'
+                        },
+                        {
+                            label: 'Интеллектуальный',
+                            data: intellectualData,
+                            borderColor: '#ffc8d8',
+                            backgroundColor: 'rgba(255, 200, 216, 0.2)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#ffc8d8'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: -100,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 182, 193, 0.2)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + Math.round(context.raw) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
